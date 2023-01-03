@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Записи сообщества Лев Толстой – зеркало русской революции. (title)
+  Записи сообщества {{ group }}
 {% endblock %} 
 {% block content %}
       <div class="container">
         <h1>Лев Толстой – зеркало русской революции.</h1>
         <p>
-          Группа тайных поклонников графа.
+          {{ group.description }}
         </p>
         <article>
-          {%for post in posts %}
+          {%for post in page_obj %}
           <ul>
             <li>
               Автор: {{ post.author.get_full_name }}
@@ -25,5 +25,8 @@
         {% endfor %}
         </article>
         <!-- под последним постом нет линии -->
+
+        
+        {% include 'posts/includes/paginator.html' %}
       </div>  
       {% endblock %}
