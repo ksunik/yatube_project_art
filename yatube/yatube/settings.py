@@ -25,31 +25,43 @@ SECRET_KEY = 'x1lv!gfxe&4js%sv0lvcvnn%no2@36naj-@9-l23l!b2ms-ccg'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '[::1]',
-    'testserver',
-]
+ALLOWED_HOSTS = []
+
 
 # Указываем откуда погружать статические файлы
 # static - имя каталога в головной территории проекта
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] 
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+
+# Переопределяем стандартные значения
+# На этот адрес перенаправит пользователей для авторизации
+# на страницу users:var_login. Полезно при @login_required
+LOGIN_URL = 'users:var_login'
+# Перенаправление после успешной авторизации
+LOGIN_REDIRECT_URL = 'posts:index'
+
+
+# Подключаем модуль отправки писем с движком filebased.EmailBackend
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# Дирректория для писем
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'posts.apps.PostsConfig',
-    'users.apps.UsersConfig',
+    'posts',
+    # Встроенное приложение для регистрации
+    # и авторизации пользователей
+    'django.contrib.auth',
+    'users.apps.UsersConfig',    # Регистрируем приложение users
     'core',
-    'about',
+    'about'
 ]
 
 MIDDLEWARE = [
@@ -66,25 +78,29 @@ ROOT_URLCONF = 'yatube.urls'
 
 
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+
+# За настройки шаблонов HTMP в Django отвечает переменная TEMPLATES
 TEMPLATES = [
     {
+        # BACKEND - тут указывается язык шаблонов
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATES_DIR],
-        'APP_DIRS': True,
+        'DIRS': [TEMPLATES_DIR],    # Здесь django будет искать шаблоны
+        'APP_DIRS': True,   # Нужно ли искать шаблоны на уровне приложений
         'OPTIONS': {
+            # Перед обработкой шаблона, вызываются функции из списка
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.context_processors.year.year',
-                
+                # Добавляем контекст-процессор,функция get_year лежит
+                # в файле 'core / context_processors / year.'
+                # Теперь можно прямо в DTL обращаться к get_year
+                'core.context_processors.year.get_year',
             ],
         },
     },
 ]
-
-
 
 WSGI_APPLICATION = 'yatube.wsgi.application'
 
@@ -95,6 +111,7 @@ WSGI_APPLICATION = 'yatube.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
+        # файл с базой будет создан в головной директории проекта
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
@@ -122,6 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
+# LANGUAGE_CODE = 'en-us'
 LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
@@ -137,10 +155,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
-LOGIN_URL = 'users:login'
-LOGIN_REDIRECT_URL = 'posts:var_main_page'
-# LOGOUT_REDIRECT_URL = 'posts:index' 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
-

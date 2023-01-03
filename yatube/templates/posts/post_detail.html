@@ -1,22 +1,20 @@
-{% load static %}
+
 <!DOCTYPE html>
 <html lang="ru">
   <head>
     <!-- Подключены иконки, стили и заполенены мета теги -->
-    <title>Пост {{post.text|slice:30 }}</title>
+    <title>Пост {{ post.text|slice:30 }}</title>
   </head>
-  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <body>
     <header>
-      {% include 'includes/header.html' %}
-      {% comment %} <nav class="navbar navbar-light" style="background-color: lightskyblue">
+      <nav class="navbar navbar-light" style="background-color: lightskyblue">
         <div class="container">
           <a class="navbar-brand" href="/">
             <img src="/static/img/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
             <span style="color:red">Ya</span>tube
           </a>
         </div>
-      </nav>       {% endcomment %}
+      </nav>      
     </header>
     <main>
       <div class="row">
@@ -25,24 +23,24 @@
             <li class="list-group-item">
               Дата публикации: {{ post.pub_date|date:"d E Y" }}
             </li>
-            <!-- если у поста есть группа -->   
             {% if post.group %}
             <li class="list-group-item">
-              Группа: {{ post.group_id }}
-              <a href="{% url 'posts:group_slug' post.group.slug %}">
-                все записи группы
-              </a>
+              Группа: {{ post.group_id  }}
+              {# формируем ссылку на группу, первая часть указывает на шаблон в urls.py вторая - ключи из views.py #}
+              <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+              
+              {# Тут сам пост #}
+              {{ posts_group }}
             </li>
-            {% else %}
-            <p>_____</p>
             {% endif %}
             <li class="list-group-item">
-              Автор: {{ post.author.get_full_name }}<!--Лев Толстой-->
+              Автор: {{ post.author.get_full_name }}
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              Всего постов автора:  <span >{{ count_post }}</span>
+              Всего постов автора:  <span > {{ post.author.posts_rname.count }} </span>
             </li>
             <li class="list-group-item">
+              {# Посмотреть что тут выходит можно через код страницы #}
               <a href="{% url 'posts:profile' post.author %}">
                 все посты пользователя
               </a>
@@ -52,23 +50,12 @@
         <article class="col-12 col-md-9">
           <p>
             {{ post.text }}
-           <!--
-            [Фокшаны.] Еще переходъ до Фокшанъ, во время котораго я ѣхалъ съ 
-            Монго. Человѣкъ пустой, но съ твердыми, хотя и ложными убѣжденіями.
-            Генерал[у] по этому должно быть случаю, угодно было спрашивать о мое
-            мъ здоровьи.
-            Свинья! К[о]вырялъ носъ и ничего не написалъ — вотъ 2 упрека за 
-            нын[ѣшній]     день. Послѣдній упрекъ становится слишкомъ частъ, 
-            хотя походъ и можетъ служить въ немъ отчасти извиненіемъ. 
-            Отношенія мои съ товарищами становятся такъ пріятны, что мнѣ 
-            жалко бросить штабъ. Здоровье кажется (2) лучше. 
-           --> 
           </p>
         </article>
       </div> 
     </main>
     <footer class="border-top text-center py-3">
-      <p>© {{ year }} Copyright <span style="color:red">Ya</span>tube</p>
+      <p>© {{ key_year }} Copyright <span style="color:red">Ya</span>tube</p>
     </footer>
   </body>
 </html> 

@@ -1,11 +1,11 @@
-from django.shortcuts import render
+# from django.shortcuts import render
 from django.views.generic.base import TemplateView
 
-# Create your views here.
 
 class AboutAuthorView(TemplateView):
-    # В переменной template_name обязательно указывается имя шаблона,
-    # на основе которого будет создана возвращаемая страница
+    """TemplateView - спец шаблон для статичных страниц.
+    По умлочанию принимает только get. template_name - обязательная
+    переменная. Идет из коробки, в ней расположение шалона"""
     template_name = 'about/author.html'
 
 

@@ -1,15 +1,19 @@
+# Формы принято хранить в отдельном файле.
+# К формам обращаемся из views.py
+
+# UserCreationForm встроенный класс, наследник forms.ModelForm
+# UserCreationForm был создан (не мной) на основе модели User
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
-
 
 User = get_user_model()
 
 
-#  создадим собственный класс для формы регистрации
-#  сделаем его наследником предустановленного класса UserCreationForm
+# Создаем свой класс для регистрации CreationForm
 class CreationForm(UserCreationForm):
+    # Наследуется класс Meta, вложенный в класс UserCreationForm
+    # что бы унаследовать ключи и переопределить их
     class Meta(UserCreationForm.Meta):
-        # укажем модель, с которой связана создаваемая форма
+        # На основе модели models.py User создаем класс формы
         model = User
-        # укажем, какие поля должны быть видны в форме и в каком порядке
-        fields = ('first_name', 'last_name', 'username', 'email') 
+        fields = ('first_name', 'last_name', 'username', 'email')
