@@ -25,7 +25,14 @@ SECRET_KEY = 'x1lv!gfxe&4js%sv0lvcvnn%no2@36naj-@9-l23l!b2ms-ccg'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'testserver',
+] 
+
+CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
 
 # Указываем откуда погружать статические файлы
