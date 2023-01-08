@@ -29,10 +29,20 @@ class Post(models.Model):
         verbose_name='Группа',
         help_text='Группа, к которой будет относиться пост'
     )
+    # Поле для картинки (необязательное) 
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True
+    )  
+    # Аргумент upload_to указывает директорию, 
+    # в которую будут загружаться пользовательские файлы. 
 
     class Meta:
         ordering = ['-pub_date']
         default_related_name = 'posts_rname'
+        verbose_name = 'Пост'
+        verbose_name_plural = 'Посты'
 
     def __str__(self):
         return self.text[:15]

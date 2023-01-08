@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 
-{% block title %}Профайл пользователя {{ author.get_full_name }}{% endblock %} 
+{% block title %}{{ author.get_full_name }} профайл пользователя {% endblock %} 
 
 {% block content %}
       <div class="container py-5">        
@@ -10,14 +11,12 @@
         <article>          
           <ul>
             <li>
-              Автор: {{ author.get_full_name }}
-            <li>
-                <a href="{% url 'posts:profile' post.author %}">все посты пользователя</a>{# Куда делать ссылку? #}
-            </li>
-            <li>
               Дата публикации: {{ post.pub_date|date:"d E Y" }} 
             </li>
           </ul>
+          {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+            <img class="card-img my-2" src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}">
+          {% endthumbnail %}
           <p>
             {{ post.text }}
           </p>
@@ -26,7 +25,7 @@
           {% if post.group %}
           <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
           {% else %}
-          <p>ПОСТ НЕ ДОБАВЛЕН В ГРУППУ</p>
+          <p>Пост не добавлен в группу</p>
           {% endif %}
         {% if not forloop.last %}<hr>{% endif %}
         {% endfor %}
