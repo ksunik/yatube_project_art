@@ -1,10 +1,17 @@
+import shutil
+import tempfile
 from posts.models import Group, Post, User
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 User = get_user_model()
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostFormTest(TestCase):
 
     @classmethod
@@ -29,16 +36,39 @@ class PostFormTest(TestCase):
             text='Тестовый текст поста 1',
             group=cls.group1
         )
-        
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        # Модуль shutil - библиотека Python с удобными инструментами 
+        # для управления файлами и директориями: 
+        # создание, удаление, копирование, перемещение, изменение папок и файлов
+        # Метод shutil.rmtree удаляет директорию и всё её содержимое
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+        
     def test_create_post(self):
         """Валидная форма создает запись в Post."""
         # Подсчитаем количество записей в Post
         posts_count = Post.objects.count()
         # Подготавливаем данные для передачи в форму
+        small_gif = (            
+             b'\x47\x49\x46\x38\x39\x61\x02\x00'
+             b'\x01\x00\x80\x00\x00\x00\x00\x00'
+             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+             b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         form_data = {
             'text': 'Тестовый текст поста 2',
-            'group': PostFormTest.group1.id
+            'group': PostFormTest.group1.id,
+            'image': uploaded,
         }
         response = PostFormTest.authorized_client.post(
             reverse('posts:post_create'),
@@ -54,8 +84,12 @@ class PostFormTest(TestCase):
         self.assertTrue(
             Post.objects.filter(
                 text = 'Тестовый текст поста 2',
+                image='posts/small.gif',
+                # group='Тестовая группа 1',
                 ).exists()
         )
+
+
 
     def test_post_edit(self):
             """ Изменение текста и группы при отправке валидной формы. """

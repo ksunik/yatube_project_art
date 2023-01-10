@@ -18,7 +18,7 @@ def index(request):
     posts = Post.objects.all()
 
     page_obj = paginator(request, posts)
-    context = {'page_obj': page_obj}
+    context = {'page_obj': page_obj, 'post': posts}
     template = 'posts/index.html'
     return render(request, template, context)
 
