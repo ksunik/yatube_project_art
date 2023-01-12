@@ -35,7 +35,7 @@ class Post(models.Model):
         upload_to='posts/',
         blank=True
     )
-    comments = models.ForiengKey(
+    comments = models.ForeignKey(
         'Comment', 
         on_delete= models.CASCADE,
         verbose_name='Комментарий'
@@ -53,13 +53,13 @@ class Post(models.Model):
         return self.text[:15]
 
 class Comment(models.Model):
-    post = models.SlugField(unique=True, verbose_name='Ссылка'),
+    post = models.SlugField(unique=True, verbose_name='Ссылка')
     author =  models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор'
-    ),
-    text = models.TextField(verbose_name='Текст', help_text='Введите текст поста'),
+    )
+    text = models.TextField(verbose_name='Текст', help_text='Введите текст поста')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата')
 
     class Meta:
