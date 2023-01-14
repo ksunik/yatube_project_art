@@ -3,16 +3,6 @@
 {% load thumbnail %}
 {% block title %}Пост {{ post.text|slice:30 }}{% endblock %}
 
-    {% comment %} <header>
-      <nav class="navbar navbar-light" style="background-color: lightskyblue">
-        <div class="container">
-          <a class="navbar-brand" href="/">
-            <img src="/static/img/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
-            <span style="color:red">Ya</span>tube
-          </a>
-        </div>
-      </nav>      
-    </header> {% endcomment %}
 {% block content %}
       <div class="row">
         <aside class="col-12 col-md-3">
@@ -58,8 +48,8 @@
             редактировать запись
           {% endif %}
           </a> 
+          {% include 'posts/includes/comment.html' %} 
         </article>
-        {% include 'posts/includes/comment.html' %} 
         {% comment %} <article class="col-12 col-md-9">
           <p>
             {{ post.text }}

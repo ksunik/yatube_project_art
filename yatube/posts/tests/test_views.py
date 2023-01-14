@@ -2,7 +2,7 @@ import shutil
 import tempfile
 from django.test import TestCase, Client
 from django.conf import settings
-from posts.models import Post, Group, User
+from posts.models import Post, Group, Comment, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -201,6 +201,26 @@ class TestPostsViews(TestCase):
     def test_img_in_context_detail(self):
         response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
         self.assertTrue(response.context['post'].image) 
+
+    # def test_authorized_create_comment(self):
+    #     """Проверка, что только авторизованный пользователь может комментировать посты"""
+
+    #     response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
+
+    #     print(response.context)
+
+        # post = Post.objects.create(
+        #     text='Пост',
+        #     group=self.group,
+        #     author=self.test_user
+        # )
+        # form_data={
+        #     'comments':'Текстовый комментарий'
+        # }
+
+        # response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}), data=form_data, follow=True)
+        # self.assertTrue(Comment.objects.filter(comments='Текстовый комментарий', author=self.test_user)).exists()
+        # self.assertEqual(response.status_code, 200) 
 
 
 class PaginatorViewsTest(TestCase):
