@@ -50,13 +50,22 @@ def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST or None, files=request.FILES or None)
     comments = Comment.objects.filter(post=post)
-    context = {
-        'post': post,
-        'post_id': post_id,
-        'form': form,
-        'comments': comments,
-        'user': request.user
-    }
+    # print(f'{request.user} request.user.is_authenticated: {request.user.is_authenticated}')
+    if request.user.is_authenticated:
+        context = {
+            'post': post,
+            'post_id': post_id,
+            'form': form,
+            'comments': comments,
+            'user': request.user
+        }
+    else:
+        context = {
+            'post': post,
+            'post_id': post_id,
+            'comments': comments,
+            'user': request.user
+        }
     return render(request, 'posts/post_detail.html', context)
 
 @login_required

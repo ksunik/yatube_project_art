@@ -125,6 +125,7 @@ class TestPostsViews(TestCase):
             'Тестовый текст4'
         }
         self.assertEqual(result_set, expect_set)
+
     def test_context_profile(self):
         self.add_entities_to_db()
         response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': 'TestUser1'}))
@@ -202,25 +203,33 @@ class TestPostsViews(TestCase):
         response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
         self.assertTrue(response.context['post'].image) 
 
-    # def test_authorized_create_comment(self):
-    #     """Проверка, что только авторизованный пользователь может комментировать посты"""
+    def test_authorized_create_comment(self):
+        """Проверка, что авторизованный пользователь может комментировать посты"""
+        response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
+        self.assertTrue(response.context.get('form'))
 
-    #     response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
+    def test_guest_no_create_comment(self):
+        """Проверка, что неавторизованный пользователь не может комментировать посты"""        
+        response = self.guest_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
+        self.assertFalse(response.context.get('form'))
 
-    #     print(response.context)
+    def test_addition_comment_to_post_detail(self):
+        """ После успешной отправки комментарий появляется на странице поста. """
+        form_data = {
+            'text': 'Тестовый комментарий',
+            'user': TestPostsViews.test_user,
+            'author': TestPostsViews.post.author
+        }
+        # Добавляем комментарий
+        self.authorized_client.post(
+            reverse('posts:add_comment', kwargs={'post_id': TestPostsViews.post.pk}),
+            data=form_data,
+            follow=True
+        )
 
-        # post = Post.objects.create(
-        #     text='Пост',
-        #     group=self.group,
-        #     author=self.test_user
-        # )
-        # form_data={
-        #     'comments':'Текстовый комментарий'
-        # }
-
-        # response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}), data=form_data, follow=True)
-        # self.assertTrue(Comment.objects.filter(comments='Текстовый комментарий', author=self.test_user)).exists()
-        # self.assertEqual(response.status_code, 200) 
+        # Получаем страницу после добавления комм-я
+        response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
+        self.assertEqual(response.context.get('comments').last().text, form_data['text'])
 
 
 class PaginatorViewsTest(TestCase):

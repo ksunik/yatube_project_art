@@ -52,11 +52,11 @@ class Post(models.Model):
         return self.text[:15]
 
 class Comment(models.Model):
-    post = models.SlugField(unique=True, verbose_name='Ссылка')
-    # post = models.ForeignKey(
-    #     Post,
-    #     on_delete=models.CASCADE,
-    #     verbose_name='comments')
+    # post = models.SlugField(unique=True, verbose_name='Ссылка')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        verbose_name='comments')
     author =  models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -67,8 +67,8 @@ class Comment(models.Model):
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата')
 
     class Meta:
-        # default_related_name = 'comment_rname'
-        default_related_name = 'comments'
+        default_related_name = 'comment_rname'
+        # default_related_name = 'comments'
 
     def __str__(self):
         return self.text
