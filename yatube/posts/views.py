@@ -1,10 +1,12 @@
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
 from .models import Post, Group, User, Comment
 from .forms import PostForm, CommentForm
 
 COUNT_POSTS = 10
+CACHE_TIME = 20
 
 
 def paginator(request, query_set):
@@ -13,7 +15,7 @@ def paginator(request, query_set):
     page_obj = paginator.get_page(page_number)
     return page_obj
 
-
+@cache_page(CACHE_TIME, key_prefix="index_page")
 def index(request):
     posts = Post.objects.all()
 
@@ -98,7 +100,6 @@ def post_edit(request, post_id):
     }
     return render(request, 'posts/create_post.html', context)
 
-@login_required
 def add_comment(request, post_id):
     """Функция вызывается из шаблона comment.html"""
     post = get_object_or_404(Post, pk=post_id)

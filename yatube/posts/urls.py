@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django.core.cache import cache
 
 app_name = 'posts'
 

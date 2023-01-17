@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+import logging
 from django.test import TestCase, Client
 from django.conf import settings
 from posts.models import Post, Group, Comment, User
@@ -7,6 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django import forms
+from django.core.cache import cache
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -87,6 +89,7 @@ class TestPostsViews(TestCase):
         # Авторизованный клиент
         self.authorized_client = Client()
         self.authorized_client.force_login(TestPostsViews.test_user)
+        cache.clear()
 
     def test_context_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -183,13 +186,6 @@ class TestPostsViews(TestCase):
     def test_img_in_context_index(self):
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertTrue(response.context['page_obj'][0].image)
-        # self.assertTrue(
-        #     Post.objects.filter(
-        #         group=TestPostsViews.group,
-        #         text='Тестовый текст поста',
-        #         image='posts/small.gif'
-        #     ).exists()
-        # ) 
 
     def test_img_in_context_profile(self):
         response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': TestPostsViews.test_user}))
@@ -231,6 +227,24 @@ class TestPostsViews(TestCase):
         response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': TestPostsViews.post.pk}))
         self.assertEqual(response.context.get('comments').last().text, form_data['text'])
 
+    def test_cache(self):
+        post = Post.objects.create(
+            author=self.test_user,
+            text='Тестовый пост_Кэш',
+            group=self.group,
+            image=None
+        )
+        response1 = (self.authorized_client.get(reverse('posts:index')))
+        print(response1.context)
+        post.delete()
+        response2 = (self.authorized_client.get(reverse('posts:index')))
+        print(response2.context)
+        self.assertEqual(response1.content, response2.content)
+        cache.clear()
+        response3 = (self.authorized_client.get(reverse('posts:index')))
+        print(response3.context)
+        self.assertNotEqual(response1.content, response3.content)
+        
 
 class PaginatorViewsTest(TestCase):
     @classmethod
@@ -256,6 +270,9 @@ class PaginatorViewsTest(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'testovyj_slug'}): 'page_obj',
             reverse('posts:profile', kwargs={'username': 'TestUser'}): 'page_obj'
         }
+
+    def setUp(self):
+        cache.clear()
 
     def test_first_page_contains_ten_records(self):
         for value, expected in self.page_name.items():

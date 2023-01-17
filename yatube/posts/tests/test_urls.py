@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 
 from posts.models import Group, Post
+from django.core.cache import cache
 
 
 User = get_user_model()
@@ -33,6 +34,7 @@ class PostURLTests(TestCase):
         self.authorized_client = Client()
         # Авторизуем пользователя
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
 
     def test_url_exist_at_desired_location_main(self):
