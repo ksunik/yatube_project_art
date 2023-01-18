@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.cache import cache_page
-from .models import Post, Group, User, Comment
+from .models import Post, Group, User, Comment, Follow
 from .forms import PostForm, CommentForm
 
 COUNT_POSTS = 10
@@ -111,3 +111,36 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
+@login_required
+def follow_index(request, username):
+    # информация о текущем пользователе доступна в переменной request.user
+    author = get_object_or_404(User, username=username)
+    posts = author.posts.select_related('author', 'group')
+    page_obj = paginator(request, posts)
+    following = (request.user.is_authenticated and Follow.objects.filter(user=request.user, author=author).exists())
+    context = {'page_obj': page_obj, 'author': author, 'following': following}
+    return render(request, 'posts/follow.html', context)
+
+@login_required
+def profile_follow(request, username):
+    # Подписаться на автора
+    author = get_object_or_404(User, username=username)
+    Follow.objects.get_or_create(
+        user=request.user,
+        author=author
+    )
+    context = {
+        'author': author,
+    }
+    return render(request, 'posts/profile.html', context)
+
+@login_required
+def profile_unfollow(request, username):
+    # Дизлайк, отписка
+    Follow.objects.filter(
+        user=request.user,
+        author_username=username
+    ).delete()
+    return render(request, 'posts:profile', username)
+ 

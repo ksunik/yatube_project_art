@@ -235,14 +235,14 @@ class TestPostsViews(TestCase):
             image=None
         )
         response1 = (self.authorized_client.get(reverse('posts:index')))
-        print(response1.context)
+        # print(response1.context)
         post.delete()
         response2 = (self.authorized_client.get(reverse('posts:index')))
-        print(response2.context)
+        # print(response2.context)
         self.assertEqual(response1.content, response2.content)
         cache.clear()
         response3 = (self.authorized_client.get(reverse('posts:index')))
-        print(response3.context)
+        # print(response3.context)
         self.assertNotEqual(response1.content, response3.content)
         
 

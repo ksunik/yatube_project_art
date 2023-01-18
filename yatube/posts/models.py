@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+NUMB_SIBM = 15
 
 
 class Group(models.Model):
@@ -49,7 +50,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:15]
+        return self.text[:NUMB_SIBM]
 
 class Comment(models.Model):
     # post = models.SlugField(unique=True, verbose_name='Ссылка')
@@ -72,3 +73,13 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        related_name='follower'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following'
+    )

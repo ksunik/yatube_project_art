@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-
-from ..models import Group, Post
+from posts.models import NUMB_SIBM, Group, Post, User
 
 User = get_user_model()
 
@@ -18,7 +17,7 @@ class PostModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text='Тестовый пост',
+            text='Тестовый пост' * 10,
         )
 
 
@@ -27,10 +26,15 @@ class PostModelTest(TestCase):
         group = PostModelTest.group
         self.assertEqual(str(group), group.title)
 
+    def test_post_str(self):
+        post_obj = PostModelTest.post
+        expected_obj_name = post_obj.text[:NUMB_SIBM]
+        self.assertEqual(str(post_obj), expected_obj_name)
+
     def test_models_have_correct_object_names_post(self):
         """Проверяем, что у модели post корректно работает __str__."""
         post = PostModelTest.post
-        self.assertEqual(str(post), post.text[:15]) 
+        self.assertEqual(str(post), post.text[:NUMB_SIBM]) 
 
     def test_verbose_name(self):
         post = PostModelTest.post
