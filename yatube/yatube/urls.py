@@ -1,12 +1,14 @@
+from django.conf import settings
+from django.conf.urls.static import static
 # По умолчанию в проект Django подключена система администрирования
 from django.contrib import admin
 # Функция include позволит использовать path() из других файлов.
 from django.urls import include, path
-from django.conf import settings
-from django.conf.urls.static import static
 
-
+# Каким view обрабатывать ошибки
 handler404 = 'core.views.page_not_found'
+handler403 = 'core.views.permission_denied'
+handler500 = 'core.views.server_error'
 
 urlpatterns = [
     # Если на сервер пришел запрос '', только для namespace 'posts'
@@ -27,7 +29,8 @@ urlpatterns = [
     path('about/', include('about.urls', namespace='about_namespace')),
 ]
 
-# позволяет обращаться к файлам в директории, указанной в MEDIA_ROOT по имени, через префикс MEDIA_URL
+# В режиме отлажки позволяет обращаться к файлам в директории,
+# указанной в MEDIA_ROOT по имени, через префикс MEDIA_URL.
 if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL, document_root=settings.MEDIA_ROOT

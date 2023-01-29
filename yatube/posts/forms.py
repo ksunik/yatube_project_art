@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Post, Comment
 
 
@@ -23,14 +24,8 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ('text',)
         labels = {
-            # 'post': 'Ссылка на пост',
-            # 'author': 'Ссылка на автора',
-            'text': 'Комментарий',
-            # 'created': 'Дата'
+            'text': 'Комментарий'
         }
         help_texts = {
-            # 'post': 'Ссылка на пост',
-            # 'author': 'Ссылка на автора',
-            'text': 'Введите текст комментария',
-            # 'created': 'Автоматически присвоенная дата создания комментария'
+            'text': 'Введите текст комментария'
         }

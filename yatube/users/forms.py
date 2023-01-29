@@ -1,10 +1,10 @@
 # Формы принято хранить в отдельном файле.
 # К формам обращаемся из views.py
 
+from django.contrib.auth import get_user_model
 # UserCreationForm встроенный класс, наследник forms.ModelForm
 # UserCreationForm был создан (не мной) на основе модели User
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 

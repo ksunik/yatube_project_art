@@ -29,9 +29,10 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '[::1]',
-    'testserver',
-] 
+    'testserver'
+]
 
+# Как обрабатывать 403
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
 
@@ -69,7 +70,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',    # Регистрируем приложение users
     'core',
     'about',
-    'sorl.thumbnail', # Для работы с графикой
+    'sorl.thumbnail'    # Разрешает в шаблоне использовать тег thumbnail
 ]
 
 MIDDLEWARE = [
@@ -164,11 +165,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Папка для загрузки медиа/картинок
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
-} 
+}

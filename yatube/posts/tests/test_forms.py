@@ -1,65 +1,59 @@
 import shutil
 import tempfile
-from posts.models import Group, Post, User
+from http import HTTPStatus
+
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from posts.models import Comment, Group, Post, User
+from django.test import Client, TestCase
+
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
-User = get_user_model()
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
-class PostFormTest(TestCase):
-
+class PostFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
+        """ Создание записи в БД. """
         super().setUpClass()
-        cls.user = User.objects.create_user(username='TestUser')
-        cls.authorized_client = Client()
-        cls.authorized_client.force_login(cls.user)
-        
-        cls.group1 = Group.objects.create(
-            title='Тестовая группа 1',
-            slug='test_slug_group_1',
-            description='Тестовое описание 1',
+        cls.test_user = User.objects.create_user(username='TestUser')
+        cls.group_dogs = Group.objects.create(
+            title='Тестовый заголовок группы 1',
+            slug='test_slug_group_dogs',
+            description='Тестовое описание группы 1'
         )
-        cls.group2 = Group.objects.create(
-            title='Тестовая группа 2',
-            slug='test_slug_group_2',
-            description='Тестовое описание 2',
+        cls.group_cats = Group.objects.create(
+            title='Тестовый заголовок группы 2',
+            slug='test_slug_group_cats',
+            description='Тестовое описание группы 2'
         )
         cls.post = Post.objects.create(
-            author=cls.user,
             text='Тестовый текст поста 1',
-            group=cls.group1
+            author=cls.test_user,
+            group=cls.group_dogs
         )
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(PostFormTests.test_user)
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # Модуль shutil - библиотека Python с удобными инструментами 
-        # для управления файлами и директориями: 
-        # создание, удаление, копирование, перемещение, изменение папок и файлов
-        # Метод shutil.rmtree удаляет директорию и всё её содержимое
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-        
-    def test_create_post(self):
-        """Валидная форма создает запись в Post."""
-        # Подсчитаем количество записей в Post
+    def test_post_create(self):
+        """ Форма создает запись в Post. """
         posts_count = Post.objects.count()
-        # Подготавливаем данные для передачи в форму
-        small_gif = (            
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
-        )
+        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
+                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
+                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+                     b'\x0A\x00\x3B')
         uploaded = SimpleUploadedFile(
             name='small.gif',
             content=small_gif,
@@ -67,44 +61,128 @@ class PostFormTest(TestCase):
         )
         form_data = {
             'text': 'Тестовый текст поста 2',
-            'group': PostFormTest.group1.id,
-            'image': uploaded,
+            'group': PostFormTests.group_dogs.id,
+            'image': uploaded
         }
-        response = PostFormTest.authorized_client.post(
+        response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
-        # Проверяем, сработал ли редирект
-        self.assertEqual(response.status_code, 200)
-        self.assertRedirects(response, reverse('posts:profile', kwargs={'username': PostFormTest.user}))
-        # Проверяем, увеличилось ли число постов
-        self.assertEqual(Post.objects.count(), posts_count+1)
-        # Проверяем, что создалась запись с нашим слагом
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertRedirects(response, reverse(
+            'posts:profile', kwargs={'username': PostFormTests.test_user})
+        )
+        self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertTrue(
             Post.objects.filter(
-                text = 'Тестовый текст поста 2',
-                image='posts/small.gif',
-                # group='Тестовая группа 1',
-                ).exists()
+                text=form_data['text'],
+                group=form_data['group'],
+                image='posts/small.gif'
+            ).exists()
         )
 
-
-
     def test_post_edit(self):
-            """ Изменение текста и группы при отправке валидной формы. """
-            form_data = {
-                'text': 'Текст изменён',
-                'group': PostFormTest.group2.id
-            }
-            response = PostFormTest.authorized_client.post(
-                reverse('posts:post_edit', kwargs={'post_id': PostFormTest.post.pk}),
-                data=form_data,
-                follow=True
-            )
-            self.assertEqual(response.status_code, 200)
-            # Проверяем, что текст изменился
-            self.assertEqual(Post.objects.get(pk=PostFormTest.post.pk).text, form_data['text'])
-            # Проверяем, что группа изменился
-            self.assertEqual(Post.objects.get(pk=PostFormTest.post.pk).group.id, form_data['group'])
+        """ Изменение текста и группы при отправке валидной формы. """
+        form_data = {
+            'text': 'Текст изменён',
+            'group': PostFormTests.group_cats.id
+        }
+        response = self.authorized_client.post(
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': PostFormTests.post.pk}
+            ),
+            data=form_data,
+            follow=True
+        )
+        edited_post = Post.objects.get(pk=PostFormTests.post.pk)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(edited_post.text, form_data['text'])
+        self.assertEqual(edited_post.group.id, form_data['group'])
 
+
+class CommentFormTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """ Создание записи в БД. """
+        super().setUpClass()
+        cls.test_user = User.objects.create_user(username='TestUser')
+        cls.group_dogs = Group.objects.create(
+            title='Тестовый заголовок группы 1',
+            slug='test_slug_group_dogs',
+            description='Тестовое описание группы 1'
+        )
+        cls.post = Post.objects.create(
+            text='Тестовый текст поста 1',
+            author=cls.test_user,
+            group=cls.group_dogs
+        )
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(CommentFormTest.test_user)
+        self.guest_client = Client()
+
+    def test_add_comment_to_post_detail_authorized(self):
+        """ После успешной отправки комментарий
+        появляется на странице поста. """
+        form_data = {
+            'text': 'Тестовый комментарий',
+            'user': CommentFormTest.test_user,
+            'author': CommentFormTest.post.author
+        }
+        self.authorized_client.post(
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': CommentFormTest.post.pk}
+            ),
+            data=form_data,
+            follow=True
+        )
+        response = self.authorized_client.get(reverse(
+            'posts:post_detail',
+            kwargs={'post_id': CommentFormTest.post.pk})
+        )
+        self.assertEqual(
+            response.context.get('comments').last().text,
+            form_data['text']
+        )
+
+        comment = Comment.objects.get(
+            post=CommentFormTest.post.id,
+            text=form_data['text'],
+            author=form_data['author']
+        )
+        self.assertTrue(comment)
+
+    def test_add_comment_to_post_detail_anonymus(self):
+        """ Неавторизованный пользователь. После отправки,
+        комментарий не добавляется в БД. """
+        form_data = {
+            'text': 'Тестовый комментарий',
+            'user': CommentFormTest.test_user,
+            'author': CommentFormTest.post.author
+        }
+        self.guest_client.post(
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': CommentFormTest.post.pk}
+            ),
+            data=form_data,
+            follow=True
+        )
+        response = self.guest_client.get(reverse(
+            'posts:post_detail',
+            kwargs={'post_id': CommentFormTest.post.pk})
+        )
+        self.assertNotEqual(
+            response.context.get('comments').last(),
+            form_data['text']
+        )
+        comment = Comment.objects.filter(
+            post=CommentFormTest.post.id,
+            text=form_data['text'],
+            author=form_data['author']
+        ).exists()
+        self.assertFalse(comment)

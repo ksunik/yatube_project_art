@@ -1,6 +1,7 @@
 # core/templatetags/user_filters.py
 # Тут создаем фильтр к DTL
 from django import template
+
 # В template.Library зарегистрированы все встроенные теги и фильтры шаблонов;
 # добавляем к ним и наш фильтр.
 register = template.Library()

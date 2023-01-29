@@ -1,98 +1,104 @@
-# posts/tests/test_urls.py
-from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from http import HTTPStatus
 
-from posts.models import Group, Post
 from django.core.cache import cache
+from django.test import TestCase
+
+from posts.models import Group, Post, User
 
 
-User = get_user_model()
-
-
-class PostURLTests(TestCase):
+class StaticURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
+        """ Создание записи в БД. """
         super().setUpClass()
-        cls.user = User.objects.create_user(username='TestUser')
+        cls.test_user = User.objects.create_user(username='TestUser')
         cls.group = Group.objects.create(
-            title='Тестовая группа',
-            slug='testovyj_slug',
-            description='Тестовое описание',
+            title='Тестовый заголовок группы',
+            slug='test_slug_group',
+            description='Тестовое описание группы'
         )
         cls.post = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост',
+            text='Тестовый текст',
+            author=cls.test_user,
             group=cls.group
         )
 
     def setUp(self):
-        # Создаем неавторизованный клиент
-        self.guest_client = Client()
-        # # Создаем пользователя
-        # self.user = User.objects.create_user(username='TestUser')
-        # Создаем второй клиент
-        self.authorized_client = Client()
-        # Авторизуем пользователя
-        self.authorized_client.force_login(self.user)
         cache.clear()
 
+    def test_url_200_unknonw_user(self):
+        """ Не авторизованный пользователь.
+        Странички должны возвращать 200. """
+        routes = [
+            '/',
+            f'/group/{StaticURLTests.post.group.slug}/',
+            f'/profile/{StaticURLTests.post.author}/',
+            f'/posts/{StaticURLTests.post.pk}/',
+        ]
+        for route in routes:
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_url_exist_at_desired_location_main(self):
-        response = self.guest_client.get('/')
-        self.assertEqual(response.status_code, 200)
+    def test_url_200_knonw_user(self):
+        """ Авторизованный пользователь. Странички должны возвращать 200. """
+        self.client.force_login(StaticURLTests.test_user)
+        routes = [
+            f'/posts/{StaticURLTests.post.pk}/edit/',
+            '/create/',
+            '/follow/'
+        ]
+        for route in routes:
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_url_exist_at_desired_location_group(self):
-        response = self.guest_client.get(f'/group/{PostURLTests.post.group.slug}/')
-        self.assertEqual(response.status_code, 200)
+    def test_url_unknonw_page_return_404(self):
+        """ Несуществующая страница отдаёт 404. """
+        response = self.client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    def test_url_exist_at_desired_location_profile(self):
-        response = self.guest_client.get(f'/profile/{PostURLTests.post.author}/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_url_exist_at_desired_location_postid(self):
-        response = self.guest_client.get(f'/posts/{PostURLTests.post.pk}/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_url_unexist_at_desired_location(self):
-        response = self.guest_client.get('/unexisting_page/')
-        self.assertEqual(response.status_code, 404)
-
-    def test_url_unexist_at_desired_location_postid(self):
-        response = self.guest_client.get(f'/posts/{PostURLTests.post.id}/edit/')
-        self.assertEqual(response.status_code, 302)
-
-    def test_url_unexist_at_desired_location_create(self):
-        response = self.guest_client.get('/create/')
-        self.assertEqual(response.status_code, 302)
-
-
-    def test_url_exists_at_desired_location_authorized(self):
-        """Страница /task/test-slug/ доступна авторизованному пользователю."""
-        response = self.authorized_client.get('/create/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_url_unexist_at_desired_location_postid_authorized(self):
-        response = self.authorized_client.get(f'/posts/{PostURLTests.post.id}/edit/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_url_unexist_at_desired_location_postid_authorized_not_author(self):
-        self.user = User.objects.create_user(username='TestUser2')
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        response = self.authorized_client.get(f'/posts/{PostURLTests.post.id}/edit/')
-        self.assertRedirects(response, (f'/posts/{PostURLTests.post.id}/'))
-
-    def test_urls_uses_correct_template(self):
-        """URL-адрес использует соответствующий шаблон."""
-        templates_url_names = {
-            '/':'posts/index.html',
-            f'/group/{PostURLTests.post.group.slug}/': 'posts/group_list.html',
-            f'/profile/{PostURLTests.post.author}/': 'posts/profile.html',
-            f'/posts/{PostURLTests.post.id}/': 'posts/post_detail.html',
-            f'/posts/{PostURLTests.post.id}/edit/': 'posts/create_post.html',
-            '/create/': 'posts/create_post.html'
+    def test_url_302_unknonw_user(self):
+        """ Не авторизованный пользователь. Проверка редиректа. """
+        url_expected_answer = {
+            f'/posts/{StaticURLTests.post.pk}/edit/':
+            f'/auth/login/?next=/posts/{StaticURLTests.post.pk}/edit/',
+            '/create/': '/auth/login/?next=/create/',
+            f'/profile/{StaticURLTests.test_user.username}/follow/':
+            (f'/auth/login/?next=/profile/{StaticURLTests.test_user.username}'
+             f'/follow/'),
+            '/follow/': '/auth/login/?next=/follow/'
         }
-        for address, template  in templates_url_names.items():
-            with self.subTest(address=address):
-                response = self.authorized_client.get(address)
+        for url, expected_answer in url_expected_answer.items():
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertRedirects(response, expected_answer)
+
+    def test_url_302_knonw_user(self):
+        """ Авторизованный пользователь. Проверка редиректа. """
+        self.test_user2 = User.objects.create_user(username='TestUser2')
+        self.client.force_login(self.test_user2)
+        response = self.client.get(
+            f'/posts/{StaticURLTests.post.pk}/edit/'
+        )
+
+        self.assertRedirects(response, f'/posts/{StaticURLTests.post.pk}/')
+
+    def test_urls_uses_correct_temp(self):
+        """ Проверка шаблона. """
+        self.client.force_login(StaticURLTests.test_user)
+        urls_templates_names = {
+            '/': 'posts/index.html',
+            f'/group/{StaticURLTests.post.group.slug}/':
+            'posts/group_list.html',
+
+            f'/profile/{StaticURLTests.post.author}/': 'posts/profile.html',
+            '/create/': 'posts/create_post.html',
+            f'/posts/{StaticURLTests.post.pk}/': 'posts/post_detail.html',
+            f'/posts/{StaticURLTests.post.pk}/edit/': 'posts/create_post.html',
+            '/follow/': 'posts/follow.html'
+        }
+        for url, template in urls_templates_names.items():
+            with self.subTest(url=url):
+                response = self.client.get(url)
                 self.assertTemplateUsed(response, template)

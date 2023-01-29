@@ -1,8 +1,9 @@
 # Импортируем из приложения django.contrib.auth.views
 # нужные обработчики/ view-класс
-from django.contrib.auth.views import LogoutView, LoginView
-from django.contrib.auth.views import PasswordResetView, PasswordChangeView
+from django.contrib.auth.views import (LoginView, LogoutView,
+                                       PasswordChangeView, PasswordResetView)
 from django.urls import path
+
 from . import views
 
 app_name = 'users'  # Указываем namespace
